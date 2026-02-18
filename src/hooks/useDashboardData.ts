@@ -1,67 +1,129 @@
 import { useQuery } from '@apollo/client/react';
 import { gql } from "@apollo/client";
 
-interface AtendimentoPorCanal {
+// ==========================================
+// TIPOS
+// ==========================================
+
+export interface AtendimentoPorCanal {
   canal: string;
   total: number;
 }
 
-interface RankingColaborador {
+export interface RankingColaborador {
+  posicao: number;
+  colaboradorId: number;
   nome: string;
-  equipe: string;
+  equipe: string | null;
+  turno: string | null;
+  // Ligação
+  ligacoesAtendidas: number;
+  ligacoesPerdidas: number;
+  tmeLigacaoSegundos: number;
+  notaLigacao: number | null;
+  // Omni
+  atendimentosOmni: number;
+  tmeOmniSegundos: number;
+  notaOmni: number | null;
+  // Consolidado
   totalAtendimentos: number;
-  tempoMedioSegundos: number;
-  taxaSatisfacao: number;
+  notaFinal: number | null;
 }
 
-interface MetricasConsolidadas {
+export interface MetricasConsolidadas {
   totalAtendimentos: number;
+  totalPerdidas: number;
+  taxaAbandono: number;
   slaPercentual: number;
-  tempoMedioAtendimentoSegundos: number;
-  tempoMedioRespostaSegundos: number;
-  taxaSatisfacao: number;
+  // Ligação
+  tmeLigacaoSegundos: number;
+  notaMediaLigacao: number;
+  // Omni
+  tmeOmniSegundos: number;
+  notaMediaOmni: number;
+  // Distribuição
   atendimentosPorCanal: AtendimentoPorCanal[];
-  rankingColaboradores: RankingColaborador[];
 }
 
 interface DashboardData {
   metricasConsolidadas: MetricasConsolidadas;
+  rankingColaboradores: RankingColaborador[];
 }
 
-// Query otimizada que busca todas as métricas de uma vez
-const GET_METRICAS_CONSOLIDADAS = gql`
-  query GetMetricasConsolidadas($dataInicio: DateTime, $dataFim: DateTime) {
-    metricasConsolidadas(dataInicio: $dataInicio, dataFim: $dataFim) {
+// ==========================================
+// QUERIES GRAPHQL
+// ==========================================
+
+const GET_DASHBOARD = gql`
+  query GetDashboard(
+    $dataInicio: DateTime
+    $dataFim: DateTime
+    $turno: String
+  ) {
+    metricasConsolidadas(
+      dataInicio: $dataInicio
+      dataFim: $dataFim
+      turno: $turno
+    ) {
       totalAtendimentos
+      totalPerdidas
+      taxaAbandono
       slaPercentual
-      tempoMedioAtendimentoSegundos
-      tempoMedioRespostaSegundos
-      taxaSatisfacao
+      tmeLigacaoSegundos
+      notaMediaLigacao
+      tmeOmniSegundos
+      notaMediaOmni
       atendimentosPorCanal {
         canal
         total
       }
-      rankingColaboradores {
-        nome
-        equipe
-        totalAtendimentos
-        tempoMedioSegundos
-        taxaSatisfacao
-      }
+    }
+
+    rankingColaboradores(
+      dataInicio: $dataInicio
+      dataFim: $dataFim
+      turno: $turno
+      limite: 50
+    ) {
+      posicao
+      colaboradorId
+      nome
+      equipe
+      turno
+      ligacoesAtendidas
+      ligacoesPerdidas
+      tmeLigacaoSegundos
+      notaLigacao
+      atendimentosOmni
+      tmeOmniSegundos
+      notaOmni
+      totalAtendimentos
+      notaFinal
     }
   }
 `;
 
-export const useDashboardData = (dataInicio?: Date, dataFim?: Date) => {
+// ==========================================
+// HOOK
+// ==========================================
+
+export type Turno = 'Madrugada' | 'Manhã' | 'Tarde' | 'Noite' | null;
+
+export const useDashboardData = (
+  dataInicio?: Date,
+  dataFim?: Date,
+  turno?: Turno,
+) => {
   const { loading, error, data, refetch } = useQuery<DashboardData>(
-    GET_METRICAS_CONSOLIDADAS,
+    GET_DASHBOARD,
     {
       variables: {
-        dataInicio: dataInicio?.toISOString(),
-        dataFim: dataFim?.toISOString(),
+        dataInicio: dataInicio?.toISOString() ?? null,
+        dataFim: dataFim?.toISOString() ?? null,
+        turno: turno ?? null,
       },
-      // Atualiza a cada 5 minutos automaticamente
-      pollInterval: 300000,
+      fetchPolicy: 'cache-and-network',
+      pollInterval: 300000, // atualiza a cada 5 minutos
     }
   );
 
@@ -69,6 +131,7 @@ export const useDashboardData = (dataInicio?: Date, dataFim?: Date) => {
     loading,
     error,
     metricas: data?.metricasConsolidadas,
+    ranking: data?.rankingColaboradores ?? [],
     refetch,
   };
 };
