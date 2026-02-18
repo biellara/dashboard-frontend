@@ -123,7 +123,6 @@ export const useDashboardData = (
         turno: turno ?? null,
       },
       fetchPolicy: 'cache-and-network',
-      pollInterval: 300000, // atualiza a cada 5 minutos
     }
   );
 
