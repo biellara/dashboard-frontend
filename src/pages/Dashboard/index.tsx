@@ -437,7 +437,7 @@ export const Dashboard = () => {
               {/* CSAT */}
               <ProgressMetric
                 label="Nota Média CSAT"
-                value={`${notaMediaConsolidada.toFixed(1)} / 10`}
+                value={`${notaMediaConsolidada.toFixed(1)} / 5`}
                 valueColor="text-emerald-600"
                 progress={(notaMediaConsolidada / 10) * 100}
                 barColor="bg-emerald-500"
