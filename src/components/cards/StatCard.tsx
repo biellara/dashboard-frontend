@@ -1,3 +1,5 @@
+import { Skeleton } from '../ui/Skeleton';
+
 interface StatCardProps {
   title: string;
   value: string | number;
@@ -9,56 +11,86 @@ interface StatCardProps {
   subtitle?: string;
   valueColor?: string;
   loading?: boolean;
+  delay?: number;
 }
 
-export const StatCard = ({ 
-  title, 
-  value, 
-  icon, 
-  trend, 
+export const StatCard = ({
+  title,
+  value,
+  icon,
+  trend,
   subtitle,
-  valueColor = 'text-slate-900',
-  loading = false
+  valueColor = 'text-ink-900',
+  loading = false,
+  delay = 0,
 }: StatCardProps) => {
   if (loading) {
     return (
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 animate-pulse">
-        <div className="h-4 bg-slate-200 rounded w-3/4 mb-4"></div>
-        <div className="h-8 bg-slate-200 rounded w-1/2"></div>
+      <div
+        className="bg-white p-6 rounded-2xl shadow-sm border border-surface-300 animate-fade-in-up"
+        style={{ animationDelay: `${delay}s` }}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <Skeleton className="h-4 w-28" />
+          <Skeleton className="h-10 w-10 rounded-xl" />
+        </div>
+        <Skeleton className="h-9 w-24 mb-2" />
+        <Skeleton className="h-3 w-36" />
       </div>
     );
   }
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-medium text-slate-500 uppercase tracking-wider">
+    <div
+      className="
+        bg-white p-6 rounded-2xl shadow-sm 
+        border border-surface-300
+        hover-lift group
+        animate-fade-in-up
+      "
+      style={{ animationDelay: `${delay}s` }}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-xs font-semibold text-ink-400 uppercase tracking-wider">
           {title}
         </span>
         {icon && (
-          <div className="text-slate-400 text-xl">
+          <div className="p-2.5 bg-surface-100 rounded-xl group-hover:bg-brand-50 transition-colors duration-300">
             {icon}
           </div>
         )}
       </div>
-      
-      <div className="flex items-baseline gap-2 mb-1">
-        <h3 className={`text-3xl font-bold ${valueColor}`}>
+
+      {/* Value */}
+      <div className="flex items-baseline gap-2.5 mb-1">
+        <h3 className={`text-3xl font-bold tracking-tight font-display ${valueColor}`}>
           {value}
         </h3>
         {trend && (
-          <span className={`text-sm font-semibold ${
-            trend.isPositive ? 'text-emerald-600' : 'text-rose-600'
-          }`}>
-            {trend.isPositive ? '↑' : '↓'} {Math.abs(trend.value)}%
+          <span
+            className={`
+              inline-flex items-center gap-0.5 text-xs font-bold px-2 py-0.5 rounded-full
+              ${trend.isPositive
+                ? 'bg-emerald-50 text-emerald-600'
+                : 'bg-brand-50 text-brand-600'
+              }
+            `}
+          >
+            <svg
+              width="10" height="10" viewBox="0 0 10 10"
+              className={`${!trend.isPositive ? 'rotate-180' : ''}`}
+            >
+              <path d="M5 2L8 6H2L5 2Z" fill="currentColor" />
+            </svg>
+            {Math.abs(trend.value)}%
           </span>
         )}
       </div>
 
+      {/* Subtitle */}
       {subtitle && (
-        <p className="text-xs text-slate-500 mt-1">
-          {subtitle}
-        </p>
+        <p className="text-xs text-ink-400 mt-1.5 leading-relaxed">{subtitle}</p>
       )}
     </div>
   );
