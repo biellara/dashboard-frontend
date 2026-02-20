@@ -1,180 +1,171 @@
 import { formatarTempo, formatarNumero } from '../../utils/formatters';
-import { RankingColaborador } from '../../hooks/useDashboardData';
+import type { RankingColaborador } from '../../hooks/useDashboardData';
 
 interface RankingTableProps {
   colaboradores: RankingColaborador[];
-  loading?: boolean;
 }
 
-const TURNO_BADGE: Record<string, string> = {
-  'Madrugada': 'bg-violet-100 text-violet-700',
-  'Manhã':    'bg-amber-100 text-amber-700',
-  'Tarde':    'bg-sky-100 text-sky-700',
-  'Noite':    'bg-slate-100 text-slate-700',
-};
-
-const NotaCell = ({ valor }: { valor: number | null }) => {
-  if (valor === null || valor === undefined) {
-    return <span className="text-slate-300 text-xs">—</span>;
-  }
-  const cor =
-    valor >= 4.5 ? 'text-emerald-600' :
-    valor >= 3.5 ? 'text-amber-600' :
-    'text-rose-600';
-  return <span className={`font-semibold ${cor}`}>{valor.toFixed(2)}</span>;
-};
-
-const PosicaoBadge = ({ posicao }: { posicao: number }) => {
-  if (posicao === 1) return (
-    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-amber-400 text-white font-bold text-sm shadow">
-      🥇
-    </div>
-  );
-  if (posicao === 2) return (
-    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-300 text-white font-bold text-sm shadow">
-      🥈
-    </div>
-  );
-  if (posicao === 3) return (
-    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-orange-400 text-white font-bold text-sm shadow">
-      🥉
-    </div>
-  );
-  return (
-    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-600 font-semibold text-sm">
-      {posicao}
-    </div>
-  );
-};
-
-export const RankingTable = ({ colaboradores, loading }: RankingTableProps) => {
-  if (loading) {
-    return (
-      <div className="p-8 text-center text-slate-400 animate-pulse">
-        Carregando ranking...
-      </div>
-    );
-  }
-
+export const RankingTable = ({ colaboradores }: RankingTableProps) => {
   if (!colaboradores || colaboradores.length === 0) {
     return (
-      <div className="p-8 text-center text-slate-500">
+      <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-100 text-center text-slate-500">
         Nenhum dado disponível
       </div>
     );
   }
 
   return (
-    <table className="w-full text-sm">
-      <thead className="bg-slate-50 border-b border-slate-200">
-        <tr>
-          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-10">#</th>
-          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Colaborador</th>
-          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Turno</th>
+    <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+      <div className="p-6 border-b border-slate-100">
+        <h3 className="text-lg font-semibold text-slate-900">
+          🏆 Ranking de Colaboradores
+        </h3>
+        <p className="text-sm text-slate-500 mt-1">
+          Top {colaboradores.length} — ordenado por Nota Final
+        </p>
+      </div>
 
-          {/* Ligação */}
-          <th className="px-4 py-3 text-center text-xs font-semibold text-indigo-500 uppercase tracking-wider border-l border-indigo-100" colSpan={3}>
-            📞 Ligação
-          </th>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="bg-slate-50 border-b border-slate-100">
 
-          {/* Omni */}
-          <th className="px-4 py-3 text-center text-xs font-semibold text-emerald-500 uppercase tracking-wider border-l border-emerald-100" colSpan={3}>
-            💬 Omnichannel
-          </th>
+            {/* Linha de grupos */}
+            <tr className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              <th colSpan={4} className="px-4 py-2 text-left border-r border-slate-200" />
+              <th colSpan={4} className="px-4 py-2 text-center border-r border-slate-200 text-indigo-500">
+                📞 Ligação
+              </th>
+              <th colSpan={4} className="px-4 py-2 text-center border-r border-slate-200 text-emerald-500">
+                💬 WhatsApp
+              </th>
+              <th colSpan={2} className="px-4 py-2 text-center text-slate-500">
+                Consolidado
+              </th>
+            </tr>
 
-          {/* Consolidado */}
-          <th className="px-4 py-3 text-center text-xs font-semibold text-slate-700 uppercase tracking-wider border-l border-slate-200" colSpan={2}>
-            Consolidado
-          </th>
-        </tr>
-        <tr className="bg-slate-50/80 border-b border-slate-100">
-          <th colSpan={3} />
-          {/* Ligação sub-headers */}
-          <th className="px-4 py-2 text-center text-xs text-slate-400 border-l border-indigo-100">Atendidas</th>
-          <th className="px-4 py-2 text-center text-xs text-slate-400">Perdidas</th>
-          <th className="px-4 py-2 text-center text-xs text-slate-400">Nota</th>
-          {/* Omni sub-headers */}
-          <th className="px-4 py-2 text-center text-xs text-slate-400 border-l border-emerald-100">Atendimentos</th>
-          <th className="px-4 py-2 text-center text-xs text-slate-400">TME</th>
-          <th className="px-4 py-2 text-center text-xs text-slate-400">Nota</th>
-          {/* Consolidado sub-headers */}
-          <th className="px-4 py-2 text-center text-xs text-slate-400 border-l border-slate-200">Total</th>
-          <th className="px-4 py-2 text-center text-xs text-slate-700 font-semibold">Nota Final</th>
-        </tr>
-      </thead>
+            {/* Linha de colunas */}
+            <tr className="text-xs font-medium text-slate-500 uppercase tracking-wider">
+              {/* Identidade */}
+              <th className="px-4 py-3 text-left">#</th>
+              <th className="px-4 py-3 text-left">Colaborador</th>
+              <th className="px-4 py-3 text-left">Equipe</th>
+              <th className="px-4 py-3 text-left border-r border-slate-200">Turno</th>
+              {/* Ligação */}
+              <th className="px-4 py-3 text-right">Atend.</th>
+              <th className="px-4 py-3 text-right">Perdidas</th>
+              <th className="px-4 py-3 text-right" title="Tempo Médio de Espera na fila">TME</th>
+              <th className="px-4 py-3 text-right border-r border-slate-200" title="Tempo Médio de Atendimento (conversa)">TMA</th>
+              {/* WhatsApp */}
+              <th className="px-4 py-3 text-right">Atend.</th>
+              <th className="px-4 py-3 text-right" title="Tempo Médio de Espera na fila">TME</th>
+              <th className="px-4 py-3 text-right border-r border-slate-200" title="Tempo Médio de Atendimento (conversa)">TMA</th>
+              {/* Notas — coluna única por canal para economizar espaço */}
+              <th className="px-4 py-3 text-right">Nota Lig.</th>
+              {/* Consolidado */}
+              <th className="px-4 py-3 text-right">Nota Omni</th>
+              <th className="px-4 py-3 text-right">Total</th>
+              <th className="px-4 py-3 text-right">Nota Final</th>
+            </tr>
+          </thead>
 
-      <tbody className="divide-y divide-slate-100">
-        {colaboradores.map((c) => (
-          <tr key={c.colaboradorId} className="hover:bg-slate-50 transition-colors">
-            {/* Posição */}
-            <td className="px-4 py-3">
-              <PosicaoBadge posicao={c.posicao} />
-            </td>
+          <tbody className="divide-y divide-slate-100">
+            {colaboradores.map((col) => (
+              <tr key={col.colaboradorId} className="hover:bg-slate-50 transition-colors">
 
-            {/* Nome */}
-            <td className="px-4 py-3">
-              <div className="font-medium text-slate-900 whitespace-nowrap">{c.nome}</div>
-              {c.equipe && (
-                <div className="text-xs text-slate-400">{c.equipe}</div>
-              )}
-            </td>
+                {/* Posição */}
+                <td className="px-4 py-4 whitespace-nowrap">
+                  <div className="flex items-center justify-center w-7 h-7 rounded-full bg-slate-100 text-slate-700 font-semibold text-xs">
+                    {col.posicao}
+                  </div>
+                </td>
 
-            {/* Turno */}
-            <td className="px-4 py-3">
-              {c.turno ? (
-                <span className={`px-2 py-1 text-xs font-medium rounded-full ${TURNO_BADGE[c.turno] ?? 'bg-slate-100 text-slate-600'}`}>
-                  {c.turno}
-                </span>
-              ) : (
-                <span className="text-slate-300 text-xs">—</span>
-              )}
-            </td>
+                {/* Nome */}
+                <td className="px-4 py-4 whitespace-nowrap font-medium text-slate-900 max-w-[180px] truncate">
+                  {col.nome}
+                </td>
 
-            {/* Ligação */}
-            <td className="px-4 py-3 text-center border-l border-indigo-50">
-              <span className="font-semibold text-slate-900">{formatarNumero(c.ligacoesAtendidas)}</span>
-            </td>
-            <td className="px-4 py-3 text-center">
-              <span className={c.ligacoesPerdidas > 0 ? 'text-rose-500 font-medium' : 'text-slate-400'}>
-                {formatarNumero(c.ligacoesPerdidas)}
-              </span>
-            </td>
-            <td className="px-4 py-3 text-center">
-              <NotaCell valor={c.notaLigacao} />
-            </td>
+                {/* Equipe */}
+                <td className="px-4 py-4 whitespace-nowrap">
+                  {col.equipe ? (
+                    <span className="px-2 py-0.5 text-xs font-medium bg-indigo-50 text-indigo-700 rounded-full">
+                      {col.equipe}
+                    </span>
+                  ) : <span className="text-slate-300">—</span>}
+                </td>
 
-            {/* Omni */}
-            <td className="px-4 py-3 text-center border-l border-emerald-50">
-              <span className="font-semibold text-slate-900">{formatarNumero(c.atendimentosOmni)}</span>
-            </td>
-            <td className="px-4 py-3 text-center text-slate-600">
-              {c.tmeOmniSegundos > 0 ? formatarTempo(c.tmeOmniSegundos) : <span className="text-slate-300 text-xs">—</span>}
-            </td>
-            <td className="px-4 py-3 text-center">
-              <NotaCell valor={c.notaOmni} />
-            </td>
+                {/* Turno */}
+                <td className="px-4 py-4 whitespace-nowrap text-slate-500 border-r border-slate-100">
+                  {col.turno ?? <span className="text-slate-300">—</span>}
+                </td>
 
-            {/* Consolidado */}
-            <td className="px-4 py-3 text-center border-l border-slate-100">
-              <span className="font-semibold text-slate-900">{formatarNumero(c.totalAtendimentos)}</span>
-            </td>
-            <td className="px-4 py-3 text-center">
-              {c.notaFinal !== null ? (
-                <span className={`
-                  inline-flex items-center justify-center px-3 py-1 rounded-full text-sm font-bold
-                  ${c.notaFinal >= 4.5 ? 'bg-emerald-100 text-emerald-700' :
-                    c.notaFinal >= 3.5 ? 'bg-amber-100 text-amber-700' :
-                    'bg-rose-100 text-rose-700'}
-                `}>
-                  {c.notaFinal.toFixed(2)}
-                </span>
-              ) : (
-                <span className="text-slate-300 text-xs">Sem avaliação</span>
-              )}
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+                {/* ── LIGAÇÃO ── */}
+                <td className="px-4 py-4 whitespace-nowrap text-right font-semibold text-slate-900">
+                  {col.ligacoesAtendidas > 0 ? formatarNumero(col.ligacoesAtendidas) : <span className="text-slate-300">—</span>}
+                </td>
+                <td className="px-4 py-4 whitespace-nowrap text-right font-medium text-rose-500">
+                  {col.ligacoesPerdidas > 0 ? formatarNumero(col.ligacoesPerdidas) : <span className="text-slate-300">—</span>}
+                </td>
+                <td className="px-4 py-4 whitespace-nowrap text-right text-slate-500">
+                  {col.tmeLigacaoSegundos > 0 ? formatarTempo(col.tmeLigacaoSegundos) : <span className="text-slate-300">—</span>}
+                </td>
+                <td className="px-4 py-4 whitespace-nowrap text-right text-slate-600 border-r border-slate-100">
+                  {col.tmaLigacaoSegundos > 0 ? formatarTempo(col.tmaLigacaoSegundos) : <span className="text-slate-300">—</span>}
+                </td>
+
+                {/* ── WHATSAPP ── */}
+                <td className="px-4 py-4 whitespace-nowrap text-right font-semibold text-slate-900">
+                  {col.atendimentosOmni > 0 ? formatarNumero(col.atendimentosOmni) : <span className="text-slate-300">—</span>}
+                </td>
+                <td className="px-4 py-4 whitespace-nowrap text-right text-slate-500">
+                  {col.tmeOmniSegundos > 0 ? formatarTempo(col.tmeOmniSegundos) : <span className="text-slate-300">—</span>}
+                </td>
+                <td className="px-4 py-4 whitespace-nowrap text-right text-slate-600 border-r border-slate-100">
+                  {col.tmaOmniSegundos > 0 ? formatarTempo(col.tmaOmniSegundos) : <span className="text-slate-300">—</span>}
+                </td>
+
+                {/* ── NOTAS ── */}
+                <td className="px-4 py-4 whitespace-nowrap text-right">
+                  <NotaBadge nota={col.notaLigacao} />
+                </td>
+                <td className="px-4 py-4 whitespace-nowrap text-right">
+                  <NotaBadge nota={col.notaOmni} />
+                </td>
+
+                {/* ── CONSOLIDADO ── */}
+                <td className="px-4 py-4 whitespace-nowrap text-right font-bold text-slate-900">
+                  {formatarNumero(col.totalAtendimentos)}
+                </td>
+                <td className="px-4 py-4 whitespace-nowrap text-right">
+                  <NotaBadge nota={col.notaFinal} bold />
+                </td>
+
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Legenda */}
+      <div className="px-6 py-3 border-t border-slate-100 bg-slate-50/50 flex gap-6 text-xs text-slate-400">
+        <span><strong className="text-slate-500">TME</strong> = Tempo Médio de Espera na fila</span>
+        <span><strong className="text-slate-500">TMA</strong> = Tempo Médio de Atendimento (duração da conversa)</span>
+      </div>
+    </div>
+  );
+};
+
+const NotaBadge = ({ nota, bold = false }: { nota: number | null; bold?: boolean }) => {
+  if (nota === null || nota === undefined) {
+    return <span className="text-slate-300 text-sm">—</span>;
+  }
+  const cor =
+    nota >= 8 ? 'text-emerald-600' :
+    nota >= 6 ? 'text-amber-600' :
+    'text-rose-600';
+
+  return (
+    <span className={`${cor} ${bold ? 'font-bold text-base' : 'font-semibold text-sm'}`}>
+      {nota.toFixed(1)}
+    </span>
   );
 };
