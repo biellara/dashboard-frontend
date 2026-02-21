@@ -9,6 +9,8 @@ interface StatCardProps {
     isPositive: boolean;
   };
   subtitle?: string;
+  description?: string;
+  badge?: React.ReactNode;
   valueColor?: string;
   loading?: boolean;
   delay?: number;
@@ -20,6 +22,8 @@ export const StatCard = ({
   icon,
   trend,
   subtitle,
+  description,
+  badge,
   valueColor = 'text-ink-900',
   loading = false,
   delay = 0,
@@ -86,11 +90,12 @@ export const StatCard = ({
             {Math.abs(trend.value)}%
           </span>
         )}
+        {badge && <div className="ml-auto">{badge}</div>}
       </div>
 
-      {/* Subtitle */}
-      {subtitle && (
-        <p className="text-xs text-ink-400 mt-1.5 leading-relaxed">{subtitle}</p>
+      {/* Subtitle or Description */}
+      {(subtitle || description) && (
+        <p className="text-xs text-ink-400 mt-1.5 leading-relaxed">{subtitle || description}</p>
       )}
     </div>
   );

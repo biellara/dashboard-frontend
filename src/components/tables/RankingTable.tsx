@@ -6,9 +6,16 @@ import { Trophy } from 'lucide-react';
 interface RankingTableProps {
   colaboradores: RankingColaborador[];
   loading?: boolean;
+  onColaboradorClick?: (colaboradorId: number, nome: string) => void;
+  colaboradorSelecionadoId?: number | null;
 }
 
-export const RankingTable = ({ colaboradores, loading = false }: RankingTableProps) => {
+export const RankingTable = ({
+  colaboradores,
+  loading = false,
+  onColaboradorClick,
+  colaboradorSelecionadoId,
+}: RankingTableProps) => {
   if (loading) {
     return (
       <div className="p-6 space-y-4">
@@ -47,7 +54,7 @@ export const RankingTable = ({ colaboradores, loading = false }: RankingTablePro
               Ranking de Colaboradores
             </h3>
             <p className="text-xs text-ink-400 mt-0.5">
-              Top {colaboradores.length} — ordenado por Nota Final
+              Top {colaboradores.length} — Nota Final = 70% Satisfação + 30% Volume
             </p>
           </div>
         </div>
@@ -92,86 +99,102 @@ export const RankingTable = ({ colaboradores, loading = false }: RankingTablePro
           </thead>
 
           <tbody>
-            {colaboradores.map((col, index) => (
-              <tr
-                key={col.colaboradorId}
-                className={`
-                  border-b border-surface-100 
-                  hover:bg-brand-50/30 
-                  transition-all duration-200
-                  animate-fade-in-up
-                  ${index < 3 ? 'bg-surface-50/50' : ''}
-                `}
-                style={{ animationDelay: `${index * 0.03}s` }}
-              >
-                {/* Position */}
-                <td className="px-4 py-4 whitespace-nowrap">
-                  <PosicaoBadge posicao={col.posicao} />
-                </td>
+            {colaboradores.map((col, index) => {
+              const isSelected = colaboradorSelecionadoId === col.colaboradorId;
 
-                {/* Name */}
-                <td className="px-4 py-4 whitespace-nowrap">
-                  <span className="font-semibold text-ink-900 max-w-[180px] truncate block">
-                    {col.nome}
-                  </span>
-                </td>
+              return (
+                <tr
+                  key={col.colaboradorId}
+                  className={`
+                    border-b border-surface-100 
+                    hover:bg-brand-50/30 
+                    transition-all duration-200
+                    animate-fade-in-up
+                    ${index < 3 ? 'bg-surface-50/50' : ''}
+                    ${isSelected ? 'bg-amber-50/60 ring-1 ring-inset ring-amber-200' : ''}
+                  `}
+                  style={{ animationDelay: `${index * 0.03}s` }}
+                >
+                  {/* Position */}
+                  <td className="px-4 py-4 whitespace-nowrap">
+                    <PosicaoBadge posicao={col.posicao} />
+                  </td>
 
-                {/* Team */}
-                <td className="px-4 py-4 whitespace-nowrap">
-                  {col.equipe ? (
-                    <span className="px-2.5 py-1 text-[11px] font-semibold bg-brand-50 text-brand-700 rounded-full border border-brand-100">
-                      {col.equipe}
-                    </span>
-                  ) : <Dash />}
-                </td>
+                  {/* Name — CLICKABLE */}
+                  <td className="px-4 py-4 whitespace-nowrap">
+                    <button
+                      onClick={() => onColaboradorClick?.(col.colaboradorId, col.nome)}
+                      className={`
+                        font-semibold max-w-[180px] truncate block text-left
+                        transition-all duration-200
+                        ${isSelected
+                          ? 'text-amber-700 underline underline-offset-2'
+                          : 'text-ink-900 hover:text-brand-600 hover:underline hover:underline-offset-2 cursor-pointer'
+                        }
+                      `}
+                      title={`Clique para filtrar por ${col.nome}`}
+                    >
+                      {col.nome}
+                    </button>
+                  </td>
 
-                {/* Shift */}
-                <td className="px-4 py-4 whitespace-nowrap text-ink-500 border-r border-surface-100">
-                  {col.turno ?? <Dash />}
-                </td>
+                  {/* Team */}
+                  <td className="px-4 py-4 whitespace-nowrap">
+                    {col.equipe ? (
+                      <span className="px-2.5 py-1 text-[11px] font-semibold bg-brand-50 text-brand-700 rounded-full border border-brand-100">
+                        {col.equipe}
+                      </span>
+                    ) : <Dash />}
+                  </td>
 
-                {/* — LIGAÇÃO — */}
-                <td className="px-4 py-4 whitespace-nowrap text-right font-bold text-ink-900">
-                  {col.ligacoesAtendidas > 0 ? formatarNumero(col.ligacoesAtendidas) : <Dash />}
-                </td>
-                <td className="px-4 py-4 whitespace-nowrap text-right font-semibold text-brand-500">
-                  {col.ligacoesPerdidas > 0 ? formatarNumero(col.ligacoesPerdidas) : <Dash />}
-                </td>
-                <td className="px-4 py-4 whitespace-nowrap text-right text-ink-500">
-                  {col.tmeLigacaoSegundos > 0 ? formatarTempo(col.tmeLigacaoSegundos) : <Dash />}
-                </td>
-                <td className="px-4 py-4 whitespace-nowrap text-right text-ink-500 border-r border-surface-100">
-                  {col.tmaLigacaoSegundos > 0 ? formatarTempo(col.tmaLigacaoSegundos) : <Dash />}
-                </td>
+                  {/* Shift */}
+                  <td className="px-4 py-4 whitespace-nowrap text-ink-500 border-r border-surface-100">
+                    {col.turno ?? <Dash />}
+                  </td>
 
-                {/* — WHATSAPP — */}
-                <td className="px-4 py-4 whitespace-nowrap text-right font-bold text-ink-900">
-                  {col.atendimentosOmni > 0 ? formatarNumero(col.atendimentosOmni) : <Dash />}
-                </td>
-                <td className="px-4 py-4 whitespace-nowrap text-right text-ink-500">
-                  {col.tmeOmniSegundos > 0 ? formatarTempo(col.tmeOmniSegundos) : <Dash />}
-                </td>
-                <td className="px-4 py-4 whitespace-nowrap text-right text-ink-500 border-r border-surface-100">
-                  {col.tmaOmniSegundos > 0 ? formatarTempo(col.tmaOmniSegundos) : <Dash />}
-                </td>
+                  {/* — LIGAÇÃO — */}
+                  <td className="px-4 py-4 whitespace-nowrap text-right font-bold text-ink-900">
+                    {col.ligacoesAtendidas > 0 ? formatarNumero(col.ligacoesAtendidas) : <Dash />}
+                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap text-right font-semibold text-brand-500">
+                    {col.ligacoesPerdidas > 0 ? formatarNumero(col.ligacoesPerdidas) : <Dash />}
+                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap text-right text-ink-500">
+                    {col.tmeLigacaoSegundos > 0 ? formatarTempo(col.tmeLigacaoSegundos) : <Dash />}
+                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap text-right text-ink-500 border-r border-surface-100">
+                    {col.tmaLigacaoSegundos > 0 ? formatarTempo(col.tmaLigacaoSegundos) : <Dash />}
+                  </td>
 
-                {/* — NOTAS — */}
-                <td className="px-4 py-4 whitespace-nowrap text-right">
-                  <NotaBadge nota={col.notaLigacao} />
-                </td>
-                <td className="px-4 py-4 whitespace-nowrap text-right">
-                  <NotaBadge nota={col.notaOmni} />
-                </td>
+                  {/* — WHATSAPP — */}
+                  <td className="px-4 py-4 whitespace-nowrap text-right font-bold text-ink-900">
+                    {col.atendimentosOmni > 0 ? formatarNumero(col.atendimentosOmni) : <Dash />}
+                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap text-right text-ink-500">
+                    {col.tmeOmniSegundos > 0 ? formatarTempo(col.tmeOmniSegundos) : <Dash />}
+                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap text-right text-ink-500 border-r border-surface-100">
+                    {col.tmaOmniSegundos > 0 ? formatarTempo(col.tmaOmniSegundos) : <Dash />}
+                  </td>
 
-                {/* — CONSOLIDADO — */}
-                <td className="px-4 py-4 whitespace-nowrap text-right font-bold text-ink-900">
-                  {formatarNumero(col.totalAtendimentos)}
-                </td>
-                <td className="px-4 py-4 whitespace-nowrap text-right">
-                  <NotaBadge nota={col.notaFinal} bold />
-                </td>
-              </tr>
-            ))}
+                  {/* — NOTAS — */}
+                  <td className="px-4 py-4 whitespace-nowrap text-right">
+                    <NotaBadge nota={col.notaLigacao} />
+                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap text-right">
+                    <NotaBadge nota={col.notaOmni} />
+                  </td>
+
+                  {/* — CONSOLIDADO — */}
+                  <td className="px-4 py-4 whitespace-nowrap text-right font-bold text-ink-900">
+                    {formatarNumero(col.totalAtendimentos)}
+                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap text-right">
+                    <NotaBadge nota={col.notaFinal} bold />
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -180,6 +203,8 @@ export const RankingTable = ({ colaboradores, loading = false }: RankingTablePro
       <div className="px-6 py-3 border-t border-surface-200 bg-surface-50/50 flex flex-wrap gap-x-6 gap-y-1 text-[11px] text-ink-300">
         <span><strong className="text-ink-500">TME</strong> = Tempo Médio de Espera na fila</span>
         <span><strong className="text-ink-500">TMA</strong> = Tempo Médio de Atendimento (conversa)</span>
+        <span><strong className="text-ink-500">Nota Final</strong> = 70% Satisfação + 30% Volume</span>
+        <span className="text-ink-200">• Clique no nome para filtrar</span>
       </div>
     </div>
   );
@@ -225,21 +250,17 @@ const NotaBadge = ({ nota, bold = false }: { nota: number | null; bold?: boolean
 
   const config =
     nota >= 8
-      ? { color: 'text-emerald-600', bg: bold ? 'bg-emerald-50 border-emerald-200' : '' }
+      ? { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' }
       : nota >= 6
-      ? { color: 'text-amber-600', bg: bold ? 'bg-amber-50 border-amber-200' : '' }
-      : { color: 'text-brand-600', bg: bold ? 'bg-brand-50 border-brand-200' : '' };
-
-  if (bold) {
-    return (
-      <span className={`inline-flex items-center justify-center min-w-[3rem] px-2 py-0.5 rounded-lg text-sm font-bold border ${config.color} ${config.bg}`}>
-        {nota.toFixed(1)}
-      </span>
-    );
-  }
+      ? { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' }
+      : { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200' };
 
   return (
-    <span className={`font-semibold text-sm ${config.color}`}>
+    <span className={`
+      inline-block px-2 py-0.5 rounded-md text-xs border
+      ${config.bg} ${config.text} ${config.border}
+      ${bold ? 'font-bold' : 'font-semibold'}
+    `}>
       {nota.toFixed(1)}
     </span>
   );

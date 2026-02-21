@@ -2,8 +2,7 @@ import { useQuery } from '@apollo/client/react';
 import { gql } from "@apollo/client";
 
 // ─────────────────────────────────────────────
-// Tipos alinhados com MetricasConsolidadasType
-// e RankingColaboradorType do backend (schema.py)
+// Tipos
 // ─────────────────────────────────────────────
 
 interface AtendimentoPorCanal {
@@ -16,16 +15,13 @@ interface MetricasConsolidadas {
   totalPerdidas: number;
   taxaAbandono: number;
   slaPercentual: number;
-  // Ligação
-  tmeLigacaoSegundos: number;   // Tempo Médio de Espera (fila)
-  tmaLigacaoSegundos: number;   // Tempo Médio de Atendimento (conversa)
+  tmeLigacaoSegundos: number;
+  tmaLigacaoSegundos: number;
   notaMediaLigacao: number;
-  // Omnichannel
-  tmeOmniSegundos: number;      // Tempo Médio de Espera (fila)
-  tmaOmniSegundos: number;      // Tempo Médio de Atendimento (conversa)
+  tmeOmniSegundos: number;
+  tmaOmniSegundos: number;
   notaMediaOmni: number;
-  notaMediaSolucaoOmni: number; // Nota da solução (separada da nota do atendente)
-  // Distribuição
+  notaMediaSolucaoOmni: number;
   atendimentosPorCanal: AtendimentoPorCanal[];
 }
 
@@ -35,25 +31,27 @@ export interface RankingColaborador {
   nome: string;
   equipe: string | null;
   turno: string | null;
-  // Ligação
   ligacoesAtendidas: number;
   ligacoesPerdidas: number;
-  tmeLigacaoSegundos: number;   // Espera na fila
-  tmaLigacaoSegundos: number;   // Duração da conversa
+  tmeLigacaoSegundos: number;
+  tmaLigacaoSegundos: number;
   notaLigacao: number | null;
-  // Omnichannel
   atendimentosOmni: number;
-  tmeOmniSegundos: number;      // Espera na fila
-  tmaOmniSegundos: number;      // Duração da conversa
+  tmeOmniSegundos: number;
+  tmaOmniSegundos: number;
   notaOmni: number | null;
-  // Voalle (produtividade ISP)
   voalleClientesAtendidos: number;
   voalleAtendimentos: number;
   voalleFinalizados: number;
   voalleTaxaFinalizacao: number | null;
-  // Consolidado
   totalAtendimentos: number;
   notaFinal: number | null;
+}
+
+export interface UltimaAtualizacao {
+  omni: string | null;
+  ligacao: string | null;
+  voalle: string | null;
 }
 
 // ─────────────────────────────────────────────
@@ -83,8 +81,20 @@ const GET_METRICAS_CONSOLIDADAS = gql`
 `;
 
 const GET_RANKING_COLABORADORES = gql`
-  query GetRankingColaboradores($dataInicio: DateTime, $dataFim: DateTime, $turno: String, $limite: Int) {
-    rankingColaboradores(dataInicio: $dataInicio, dataFim: $dataFim, turno: $turno, limite: $limite) {
+  query GetRankingColaboradores(
+    $dataInicio: DateTime,
+    $dataFim: DateTime,
+    $turno: String,
+    $colaboradorId: Int,
+    $limite: Int
+  ) {
+    rankingColaboradores(
+      dataInicio: $dataInicio,
+      dataFim: $dataFim,
+      turno: $turno,
+      colaboradorId: $colaboradorId,
+      limite: $limite
+    ) {
       posicao
       colaboradorId
       nome
@@ -109,17 +119,38 @@ const GET_RANKING_COLABORADORES = gql`
   }
 `;
 
+const GET_ULTIMA_ATUALIZACAO = gql`
+  query GetUltimaAtualizacao {
+    ultimaAtualizacao {
+      omni
+      ligacao
+      voalle
+    }
+  }
+`;
+
 // ─────────────────────────────────────────────
 // Hook principal
 // ─────────────────────────────────────────────
 
 const POLL_INTERVAL_MS = 300_000; // 5 minutos
 
-export const useDashboardData = (dataInicio?: Date, dataFim?: Date, turno?: string) => {
+export const useDashboardData = (
+  dataInicio?: Date,
+  dataFim?: Date,
+  turno?: string,
+  colaboradorId?: number | null,
+) => {
   const variables = {
     dataInicio: dataInicio?.toISOString() ?? null,
     dataFim: dataFim?.toISOString() ?? null,
     turno: turno ?? null,
+  };
+
+  const rankingVariables = {
+    ...variables,
+    colaboradorId: colaboradorId ?? null,
+    limite: 50,
   };
 
   const {
@@ -139,12 +170,21 @@ export const useDashboardData = (dataInicio?: Date, dataFim?: Date, turno?: stri
     refetch: refetchRanking,
   } = useQuery<{ rankingColaboradores: RankingColaborador[] }>(
     GET_RANKING_COLABORADORES,
-    { variables: { ...variables, limite: 50 }, pollInterval: POLL_INTERVAL_MS }
+    { variables: rankingVariables, pollInterval: POLL_INTERVAL_MS }
+  );
+
+  const {
+    data: dataAtualizacao,
+    refetch: refetchAtualizacao,
+  } = useQuery<{ ultimaAtualizacao: UltimaAtualizacao }>(
+    GET_ULTIMA_ATUALIZACAO,
+    { pollInterval: POLL_INTERVAL_MS }
   );
 
   const refetch = () => {
     refetchMetricas();
     refetchRanking();
+    refetchAtualizacao();
   };
 
   return {
@@ -152,6 +192,7 @@ export const useDashboardData = (dataInicio?: Date, dataFim?: Date, turno?: stri
     error: errorMetricas ?? errorRanking,
     metricas: dataMetricas?.metricasConsolidadas,
     rankingColaboradores: dataRanking?.rankingColaboradores ?? [],
+    ultimaAtualizacao: dataAtualizacao?.ultimaAtualizacao ?? null,
     refetch,
   };
 };
